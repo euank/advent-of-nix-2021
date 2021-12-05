@@ -10,10 +10,10 @@ let
   # Parse boards into their initial unmarked form
 
   parseBoard = board:
-  let
-    boardLines = splitString "\n" board;
-    parseLine = line: map (val: {val = toInt val; marked = false;}) (splitStringWhitespace line);
-  in
+    let
+      boardLines = splitString "\n" board;
+      parseLine = line: map (val: { val = toInt val; marked = false; }) (splitStringWhitespace line);
+    in
     map parseLine boardLines;
 
   boards = map (parseBoard) rawBoards;
@@ -22,7 +22,7 @@ let
     let
       genRow = i: map (row: elemAt row i) board;
     in
-      imap0 (i: _: genRow i) board;
+    imap0 (i: _: genRow i) board;
 
   isBoardWinning = board:
     let
@@ -47,37 +47,38 @@ let
   markBoards = boards: num: map (board: markBoard board num) boards;
 
   findWinning = boards: draws:
-  let
-    findWinning' = state:
     let
-      winning = filter isBoardWinning state.boards;
-      draw = head state.draws;
+      findWinning' = state:
+        let
+          winning = filter isBoardWinning state.boards;
+          draw = head state.draws;
+        in
+        if (length winning) > 0 then { board = (head winning); draw = state.prevDraw; }
+        else if (length state.draws) == 0 then throw "no winner"
+        else findWinning' ({ draws = (tail state.draws); boards = markBoards state.boards draw; prevDraw = draw; });
     in
-      if (length winning) > 0 then { board = (head winning); draw = state.prevDraw; }
-      else if (length state.draws) == 0 then throw "no winner"
-      else findWinning' ({ draws = (tail state.draws); boards = markBoards state.boards draw; prevDraw = draw; });
-  in
     (findWinning' { inherit boards draws; });
 
   winning = findWinning boards draws;
 
   findWinningLast = boards: draws:
-  let
-    findWinningLast' = state:
     let
-      winning = filter isBoardWinning state.boards;
-      winningScores = state.winningScores ++ (map (b: scoreBoard b state.prevDraw) winning);
-      notWinning = filter (f: ! isBoardWinning f) state.boards;
-      draw = head state.draws;
+      findWinningLast' = state:
+        let
+          winning = filter isBoardWinning state.boards;
+          winningScores = state.winningScores ++ (map (b: scoreBoard b state.prevDraw) winning);
+          notWinning = filter (f: ! isBoardWinning f) state.boards;
+          draw = head state.draws;
+        in
+        if (length state.draws) == 0 then last state.winningScores
+        else
+          findWinningLast' ({
+            inherit winningScores;
+            draws = (tail state.draws);
+            boards = markBoards notWinning draw;
+            prevDraw = draw;
+          });
     in
-      if (length state.draws) == 0 then last state.winningScores
-      else findWinningLast' ({
-        inherit winningScores;
-        draws = (tail state.draws);
-        boards = markBoards notWinning draw;
-        prevDraw = draw;
-      });
-  in
     (findWinningLast' { inherit boards draws; winningScores = [ ]; });
 
   winningLast = findWinningLast boards draws;
