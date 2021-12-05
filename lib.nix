@@ -8,20 +8,5 @@ with pkgs.lib;
     let bitSet = n: i: if i == 0 then (mod n 2) == 1 else bitSet (n / 2) (i - 1);
     in bitSet;
 
-  # I thought I needed these on day3, but I read the question wrong. Keeping em around just in case
-
-  # The length of the prefix two lists share
-  sharedPrefixLen =
-    let
-      f = acc: l1: l2:
-        if (length l1) == 0 then acc
-        else if (length l2) == 0 then acc
-        else if (head l1) == (head l2) then f (acc + 1) (tail l1) (tail l2)
-        else acc;
-    in
-    (f 0);
-
-  # shared prefix length for strings
-  sharedStrLen = s1: s2: sharedPrefixLen (stringToCharacters s1) (stringToCharacters s2);
-
+  splitStringWhitespace = s: pkgs.lib.flatten (builtins.filter builtins.isList (builtins.split "([^ ]+)" s));
 }
