@@ -11,7 +11,7 @@ let
       x = elemAt parts 0;
       y = elemAt parts 1;
     in
-      { x = toInt x; y = toInt y; };
+    { x = toInt x; y = toInt y; };
 
   parseSegment = line:
     let
@@ -19,7 +19,7 @@ let
       start = elemAt parts 0;
       end = elemAt parts 1;
     in
-      { start = parsePoint start; end = parsePoint end; };
+    { start = parsePoint start; end = parsePoint end; };
 
   lineSegments = map parseSegment linesParts;
 
@@ -47,17 +47,17 @@ let
         newCol = (sublist 0 toMark.start col) ++ (map (el: el + 1) (sublist toMark.start toMark.len col)) ++ (sublist (toMark.start + toMark.len) ((length col) - (toMark.start + toMark.len)) col);
         newBoard = (sublist 0 x board) ++ [ newCol ] ++ (sublist (x + 1) ((length board) - x + 1) board);
       in
-        newBoard
+      newBoard
     else if line.start.y == line.end.y
     # Mark off an 'x' aligned line
     then
-    let
+      let
         y = line.start.y;
         toMark = if line.start.x < line.end.x then { start = line.start.x; len = line.end.x - line.start.x + 1; } else { start = line.end.x; len = line.start.x - line.end.x + 1; };
         updateCols = sublist toMark.start toMark.len board;
         updatedCols = map (c: (sublist 0 y c) ++ [ ((elemAt c y) + 1) ] ++ (sublist (y + 1) ((length c) + 1 - y) c)) updateCols;
         newBoard = (sublist 0 toMark.start board) ++ updatedCols ++ (sublist (toMark.start + toMark.len) ((length board) - (toMark.start + toMark.len) + 1) board);
-    in
+      in
       newBoard
     else board;
 
@@ -67,13 +67,13 @@ let
       mp = maxPoint lineSegments;
       initBoard = genList (_: genList (_: 0) (mp.y + 1)) (mp.x + 1);
       markedBoard' = board: lineSegments:
-      let
-        toMark = head lineSegments;
-      in
-      if (length lineSegments) == 0 then board
-      else markedBoard' (markLine board toMark) (tail lineSegments);
+        let
+          toMark = head lineSegments;
+        in
+        if (length lineSegments) == 0 then board
+        else markedBoard' (markLine board toMark) (tail lineSegments);
     in
-      markedBoard' initBoard lineSegments;
+    markedBoard' initBoard lineSegments;
 
   answer = markedBoard:
     count (el: el > 1) (flatten markedBoard);
@@ -81,12 +81,12 @@ let
   # part 2 stuff
 
   markPoint = point: board:
-  let
-    col = elemAt board point.x;
-    val = elemAt col point.y;
-    newCol = (sublist 0 point.y col) ++ [ (val + 1) ] ++ (sublist (point.y + 1) ((length col) - point.y + 1) col);
-    newBoard = (sublist 0 point.x board) ++ [ newCol ] ++ (sublist (point.x + 1) ((length board) - point.x + 1) board);
-  in
+    let
+      col = elemAt board point.x;
+      val = elemAt col point.y;
+      newCol = (sublist 0 point.y col) ++ [ (val + 1) ] ++ (sublist (point.y + 1) ((length col) - point.y + 1) col);
+      newBoard = (sublist 0 point.x board) ++ [ newCol ] ++ (sublist (point.x + 1) ((length board) - point.x + 1) board);
+    in
     newBoard;
 
   markLine2 = board: line:
@@ -98,7 +98,7 @@ let
         ys = if line.start.y < line.end.y then range line.start.y line.end.y else (reverseList (range line.end.y line.start.y));
         points = map (el: { x = el.fst; y = el.snd; }) (zipLists xs ys);
       in
-        foldl' (b: p: markPoint p b) board points
+      foldl' (b: p: markPoint p b) board points
     else if line.start.x == line.end.x
     # Mark off a 'y' aligned line
     then
@@ -109,17 +109,17 @@ let
         newCol = (sublist 0 toMark.start col) ++ (map (el: el + 1) (sublist toMark.start toMark.len col)) ++ (sublist (toMark.start + toMark.len) ((length col) - (toMark.start + toMark.len)) col);
         newBoard = (sublist 0 x board) ++ [ newCol ] ++ (sublist (x + 1) ((length board) - x + 1) board);
       in
-        newBoard
+      newBoard
     else if line.start.y == line.end.y
     # Mark off an 'x' aligned line
     then
-    let
+      let
         y = line.start.y;
         toMark = if line.start.x < line.end.x then { start = line.start.x; len = line.end.x - line.start.x + 1; } else { start = line.end.x; len = line.start.x - line.end.x + 1; };
         updateCols = sublist toMark.start toMark.len board;
         updatedCols = map (c: (sublist 0 y c) ++ [ ((elemAt c y) + 1) ] ++ (sublist (y + 1) ((length c) + 1 - y) c)) updateCols;
         newBoard = (sublist 0 toMark.start board) ++ updatedCols ++ (sublist (toMark.start + toMark.len) ((length board) - (toMark.start + toMark.len) + 1) board);
-    in
+      in
       newBoard
     else board;
 
@@ -128,13 +128,13 @@ let
       mp = maxPoint lineSegments;
       initBoard = genList (_: genList (_: 0) (mp.y + 1)) (mp.x + 1);
       markedBoard' = board: lineSegments:
-      let
-        toMark = head lineSegments;
-      in
-      if (length lineSegments) == 0 then board
-      else markedBoard' (markLine2 board toMark) (tail lineSegments);
+        let
+          toMark = head lineSegments;
+        in
+        if (length lineSegments) == 0 then board
+        else markedBoard' (markLine2 board toMark) (tail lineSegments);
     in
-      markedBoard' initBoard lineSegments;
+    markedBoard' initBoard lineSegments;
 
 in
 rec {
