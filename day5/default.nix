@@ -67,24 +67,34 @@ let
   pointEqual = lhs: rhs: lhs.x == rhs.x && lhs.y == rhs.y;
   pointLinear = lhs: rhs: lhs.x == rhs.x || lhs.y == rhs.y;
 
-  movePointTowards = point: to:
-    if point.x < to.x then point // { x = point.x + 1; }
-    else if point.x > to.x then point // { x = point.x - 1; }
-    else if point.y < to.y then point // { y = point.y + 1; }
-    else if point.y > to.y then point // { y = point.y - 1; }
-    else point;
-
-  # Recursive markLine; base case is start == end. Other case is mark start, move start towards end.
-  # This takes O(n) where n is the number of points on the line. It's _slow_
   markLine = board: line:
     if pointEqual line.start line.end then board
-    else if ! (pointLinear line.start line.end) then board
-    else
+    else if line.start.x == line.end.x
+    # Mark off a 'y' aligned line
+    then
       let
-        point = line.start;
-        nextStart = movePointTowards line.start line.end;
-        nextLine = line // { start = nextStart; };
-      in markLine (markPoint point board) nextLine;
+        board' = expandBoard line.end (expandBoard line.start board);
+        x = line.start.x;
+        col = elemAt board' x;
+        toMark = if line.start.y < line.end.y then { start = line.start.y; len = (line.end.y - line.start.y); } else { start = line.end.y; len = (line.start.y - line.end.y); };
+        newCol = (sublist 0 toMark.start col) ++ (map (el: el + 1) (sublist toMark.start toMark.len col)) ++ (sublist (toMark.start + toMark.len + 1) ((length col) - (toMark.start + toMark.len + 1)) col);
+        newBoard = (sublist 0 x board') ++ [ newCol ] ++ (sublist (x + 1) ((length board') - x + 1) board');
+      in
+        newBoard
+    else if line.start.y == line.end.y
+    # Mark off an 'x' aligned line
+    then
+    let
+        board' = expandBoard line.end (expandBoard line.start board);
+        y = line.start.y;
+        toMark = if line.start.x < line.end.x then { start = line.start.x; len = line.end.x - line.start.x; } else { start = line.end.x; len = line.start.x - line.end.x; };
+        updateCols = sublist toMark.start toMark.len board';
+        updatedCols = map (c: (sublist 0 y) ++ [ ((elemAt c y) + 1) ] ++ (sublist (y + 1) ((length c) + 1 - y) c)) updateCols;
+        newBoard = (sublist 0 toMark.start board') ++ updatedCols ++ (sublist (toMark.start + toMark.len) ((length board') - (toMark.start + toMark.len) + 1) board');
+    in
+      newBoard
+    else board;
+
 
   markedBoard = lineSegments:
     let
@@ -100,5 +110,5 @@ let
 in
 {
   inherit markedBoard lineSegments;
-  # markedBoard = markedBoard lineSegments;
+  x = markedBoard lineSegments;
 }
