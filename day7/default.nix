@@ -1,4 +1,3 @@
-
 { lib, pkgs }:
 with pkgs.lib;
 with lib;
@@ -39,7 +38,6 @@ let
       if left > cur && right > cur then start
       else if left < cur then findVal left
       else findVal right;
-
 in
 {
   part1 = part1Cost;
