@@ -9,4 +9,6 @@ with pkgs.lib;
     in bitSet;
 
   splitStringWhitespace = s: pkgs.lib.flatten (builtins.filter builtins.isList (builtins.split "([^ ]+)" s));
+
+  abs = x: if x < 0 then (-1) * x else x;
 }

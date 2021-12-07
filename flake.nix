@@ -11,5 +11,6 @@
     day4 = import ./day4 { inherit lib pkgs; };
     day5 = import ./day5 { inherit lib pkgs; };
     day6 = import ./day6 { inherit lib pkgs; };
+    day7 = import ./day7 { inherit lib pkgs; };
   };
 }
