@@ -32,13 +32,23 @@ let
       newState = origFishAged ++ (genList (_: 8) (zfishNdx + 1));
     in
     # We need to sort because of we appended 6s, but it's possible to have a
-      # 7 from one round ago. We'll be mostly sorted, so this should be fast.
+    # 7 from one round ago. We'll be mostly sorted, so this should be fast.
     sort lessThan newState;
 
   stepDays = days: state:
     if days == 0 then state
     else stepDays (days - 1) (stepDay state);
+
+  # Part 2
+  numGenerated = daysLeft: val:
+    if daysLeft <= val then 1
+    # Generate us + our child recursively
+    else (numGenerated (daysLeft - val) 9) + (numGenerated (daysLeft - val) 7);
+
+  totalGenerated = days: state: pkgs.lib.foldl' builtins.add 0 (map (n: numGenerated days n) state);
+
 in
 {
-  part1 = length (stepDays 80 sortedState);
+  part1 = totalGenerated 80 sortedState;
+  part2 = totalGenerated 256 sortedState;
 }
