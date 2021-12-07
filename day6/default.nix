@@ -40,15 +40,29 @@ let
     else stepDays (days - 1) (stepDay state);
 
   # Part 2
+  # numGenerated: unused, this is too slow, I immediately needed memoization
   numGenerated = daysLeft: val:
     if daysLeft <= val then 1
     # Generate us + our child recursively
     else (numGenerated (daysLeft - val) 9) + (numGenerated (daysLeft - val) 7);
 
-  totalGenerated = days: state: pkgs.lib.foldl' builtins.add 0 (map (n: numGenerated days n) state);
+  # memoized. Fast. Good.
+  numGeneratedMemo = memo: daysLeft: val:
+    if daysLeft <= val then { inherit memo; val = 1; }
+    else if memo ? "${toString daysLeft}-${toString val}" then { inherit memo; val = memo."${toString daysLeft}-${toString val}"; }
+    else
+      let
+        lhs = (numGeneratedMemo memo (daysLeft - val) 9);
+        rhs = (numGeneratedMemo lhs.memo (daysLeft - val) 7);
+        answer = lhs.val + rhs.val;
+        newMemo = rhs.memo // { "${toString daysLeft}-${toString val}" = answer; };
+      in { memo = newMemo; val = answer; };
 
+      totalGenerated = days: state:
+        let memo = {};
+        in pkgs.lib.foldl' (acc: rhs: let tmp = numGeneratedMemo acc.memo days rhs; in { val = acc.val + tmp.val; memo = tmp.memo; }) ({ inherit memo; val = 0; }) state;
 in
 {
-  part1 = totalGenerated 80 sortedState;
-  part2 = totalGenerated 256 sortedState;
+  part1 = (totalGenerated 80 sortedState).val;
+  part2 = (totalGenerated 256 sortedState).val;
 }
