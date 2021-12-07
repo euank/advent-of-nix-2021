@@ -32,7 +32,7 @@ let
       newState = origFishAged ++ (genList (_: 8) (zfishNdx + 1));
     in
     # We need to sort because of we appended 6s, but it's possible to have a
-    # 7 from one round ago. We'll be mostly sorted, so this should be fast.
+      # 7 from one round ago. We'll be mostly sorted, so this should be fast.
     sort lessThan newState;
 
   stepDays = days: state:
@@ -56,11 +56,12 @@ let
         rhs = (numGeneratedMemo lhs.memo (daysLeft - val) 7);
         answer = lhs.val + rhs.val;
         newMemo = rhs.memo // { "${toString daysLeft}-${toString val}" = answer; };
-      in { memo = newMemo; val = answer; };
+      in
+      { memo = newMemo; val = answer; };
 
-      totalGenerated = days: state:
-        let memo = {};
-        in pkgs.lib.foldl' (acc: rhs: let tmp = numGeneratedMemo acc.memo days rhs; in { val = acc.val + tmp.val; memo = tmp.memo; }) ({ inherit memo; val = 0; }) state;
+  totalGenerated = days: state:
+    let memo = { };
+    in pkgs.lib.foldl' (acc: rhs: let tmp = numGeneratedMemo acc.memo days rhs; in { val = acc.val + tmp.val; memo = tmp.memo; }) ({ inherit memo; val = 0; }) state;
 in
 {
   part1 = (totalGenerated 80 sortedState).val;
