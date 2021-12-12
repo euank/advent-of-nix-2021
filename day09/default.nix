@@ -21,8 +21,8 @@ let
     else true;
 
   getPoint = grid: x: y: default:
-    if ! (gridContains grid x y) then default
-    else (elemAt (elemAt grid.data y) x);
+    if ! gridContains grid x y then default
+    else elemAt (elemAt grid.data y) x;
 
 
 

@@ -52,8 +52,8 @@ let
     else if memo ? "${toString daysLeft}-${toString val}" then { inherit memo; val = memo."${toString daysLeft}-${toString val}"; }
     else
       let
-        lhs = (numGeneratedMemo memo (daysLeft - val) 9);
-        rhs = (numGeneratedMemo lhs.memo (daysLeft - val) 7);
+        lhs = numGeneratedMemo memo (daysLeft - val) 9;
+        rhs = numGeneratedMemo lhs.memo (daysLeft - val) 7;
         answer = lhs.val + rhs.val;
         newMemo = rhs.memo // { "${toString daysLeft}-${toString val}" = answer; };
       in
@@ -61,7 +61,7 @@ let
 
   totalGenerated = days: state:
     let memo = { };
-    in pkgs.lib.foldl' (acc: rhs: let tmp = numGeneratedMemo acc.memo days rhs; in { val = acc.val + tmp.val; memo = tmp.memo; }) ({ inherit memo; val = 0; }) state;
+    in pkgs.lib.foldl' (acc: rhs: let tmp = numGeneratedMemo acc.memo days rhs; in { val = acc.val + tmp.val; memo = tmp.memo; }) { inherit memo; val = 0; } state;
 in
 {
   part1 = (totalGenerated 80 sortedState).val;

@@ -45,16 +45,16 @@ let
   co2ScrubberRating =
     let
       answer = candidates: pos:
-        if (length candidates) == 1 then (head candidates)
+        if (length candidates) == 1 then head candidates
         else if pos == -1 then throw "Ran outta bits with no answer"
         else
           let
             curBit = if (mostCommonBit candidates pos) == 1 then 0 else 1;
             nextCandidates = filter (c: curBit == (if (bitSet c pos) then 1 else 0)) candidates;
           in
-          (answer nextCandidates (pos - 1));
+          answer nextCandidates (pos - 1);
     in
-    (answer nums (numBits - 1));
+    answer nums (numBits - 1);
 
 
 in

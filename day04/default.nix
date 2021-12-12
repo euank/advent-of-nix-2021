@@ -55,9 +55,9 @@ let
         in
         if (length winning) > 0 then { board = (head winning); draw = state.prevDraw; }
         else if (length state.draws) == 0 then throw "no winner"
-        else findWinning' ({ draws = (tail state.draws); boards = markBoards state.boards draw; prevDraw = draw; });
+        else findWinning' { draws = (tail state.draws); boards = markBoards state.boards draw; prevDraw = draw; };
     in
-    (findWinning' { inherit boards draws; });
+    findWinning' { inherit boards draws; };
 
   winning = findWinning boards draws;
 
@@ -72,14 +72,14 @@ let
         in
         if (length state.draws) == 0 then last state.winningScores
         else
-          findWinningLast' ({
+          findWinningLast' {
             inherit winningScores;
-            draws = (tail state.draws);
+            draws = tail state.draws;
             boards = markBoards notWinning draw;
             prevDraw = draw;
-          });
+          };
     in
-    (findWinningLast' { inherit boards draws; winningScores = [ ]; });
+    findWinningLast' { inherit boards draws; winningScores = [ ]; };
 
   winningLast = findWinningLast boards draws;
 in

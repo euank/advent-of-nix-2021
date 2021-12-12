@@ -5,7 +5,7 @@ let
     let
       parts = (lib.splitString " " line);
       dir = lib.head parts;
-      num = lib.toInt (lib.head (lib.tail parts));
+      num = lib.pipe parts [ lib.tail lib.head lib.toInt ];
     in
     { inherit dir num; };
   steps = builtins.map toStep (lib.splitString "\n" (lib.fileContents ./input.lines));
@@ -22,8 +22,8 @@ let
     else if step.dir == "up" then acc // { aim = acc.aim - step.num; }
     else throw "error";
 
-  answer1 = lib.foldl part1Apply ({ x = 0; depth = 0; }) steps;
-  answer2 = lib.foldl part2Apply ({ x = 0; depth = 0; aim = 0; }) steps;
+  answer1 = lib.foldl part1Apply { x = 0; depth = 0; } steps;
+  answer2 = lib.foldl part2Apply { x = 0; depth = 0; aim = 0; } steps;
 in
 {
   part1 = answer1.x * answer1.depth;
