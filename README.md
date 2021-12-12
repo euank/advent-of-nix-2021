@@ -25,7 +25,7 @@ $ nix eval '.#day05.part1'
 $ nix eval '.#day05.part2'
 ```
 
-Running the days separately helps, and removing the stack size limit is needed for part 2.
+Running the parts separately helps, and removing the stack size limit is needed for part 2.
 
 On my computer, it takes around 4 minutes to complete.
 It takes more than 15GiB of memory as well.
