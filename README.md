@@ -8,12 +8,12 @@ nix, not to code golf or do anything fancy.
 
 ### Running solutions
 
-In general, `nix eval '.#dayX'` (where 'X' is the number of the day, such as
-`nix eval '.#day3'`) will display the answer to a given day.
+In general, `nix eval '.#dayX'` (where 'X' is the number of the day, padded to length 2, such as
+`nix eval '.#day03'`) will display the answer to a given day.
 
 ### Specific day's notes
 
-#### day 5
+#### day 05
 
 This one is the first one where the performance is _bad_. Really bad.
 
