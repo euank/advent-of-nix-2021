@@ -68,7 +68,23 @@ let
       init = { inherit grid; flashes = 0; };
     in
     foldl' (acc: _: step acc) init (range 0 (times - 1));
+
+
+  # part 2
+  # We can re-use our existing code by just checking the num flashes as we go.
+  findAllFlashingStep = state:
+    let
+      width = length (head state.grid);
+      height = length state.grid;
+      next = step state;
+    in
+    # If there are width * height flashes, that's the entire grid flashing, so we found our step
+    if (next.flashes - state.flashes) == (width * height) then 1
+    # Otherwise, try another step
+    else 1 + findAllFlashingStep next;
+
 in
 {
   part1 = (stepTimes grid 100).flashes;
+  part2 = findAllFlashingStep { flashes = 0; inherit grid; };
 }
