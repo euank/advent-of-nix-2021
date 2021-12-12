@@ -5,16 +5,11 @@ let
   data = fileContents ./input.lines;
   grid = map (s: map toInt (stringToCharacters s)) (splitString "\n" data);
 
-  adjacentCoords = c: [
-    ({ x = c.x; y = c.y + 1; })
-    ({ x = c.x; y = c.y - 1; })
-    ({ x = c.x + 1; y = c.y; })
-    ({ x = c.x - 1; y = c.y; })
-    ({ x = c.x + 1; y = c.y + 1; })
-    ({ x = c.x + 1; y = c.y - 1; })
-    ({ x = c.x - 1; y = c.y + 1; })
-    ({ x = c.x - 1; y = c.y - 1; })
-  ];
+  adjacentCoords = c:
+  let
+    adjInclusive = cartesianProductOfSets { x = range (c.x - 1) (c.x + 1); y = range (c.y - 1) (c.y + 1); };
+  in
+    filter (c2: c2.x != c.x || c2.y != c.y) adjInclusive;
 
   inArr = arr: x: y:
     let
