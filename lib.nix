@@ -31,4 +31,6 @@ rec {
       toY ++ [ (toX ++ [ val ] ++ afterX) ] ++ afterY;
 
   get2dArr = arr: x: y: elemAt (elemAt arr y) x;
+
+  matches = regex: str: (builtins.match regex str) != null;
 }
