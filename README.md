@@ -21,8 +21,8 @@ Bad enough that you need to run it specially:
 
 ```
 $ ulimit -s unlimited
-$ nix eval '.#day5.part1'
-$ nix eval '.#day5.part2'
+$ nix eval '.#day05.part1'
+$ nix eval '.#day05.part2'
 ```
 
 Running the days separately helps, and removing the stack size limit is needed for part 2.
