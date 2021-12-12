@@ -29,4 +29,6 @@ rec {
       afterX = sublist (x  + 1) ((length elY) - (x + 1)) elY;
     in
       toY ++ [ (toX ++ [ val ] ++ afterX) ] ++ afterY;
+
+  get2dArr = arr: x: y: elemAt (elemAt arr y) x;
 }
