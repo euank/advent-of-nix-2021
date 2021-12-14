@@ -1,4 +1,4 @@
-{ pkgs }:
+{ pkgs, ... }:
 with pkgs;
 let
   lines = builtins.map lib.toInt (lib.splitString "\n" (lib.fileContents ./input.lines));
