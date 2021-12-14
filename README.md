@@ -32,3 +32,17 @@ It takes more than 15GiB of memory as well.
 
 I may come back to this one to optimize the solution further since having to
 increase the stack size seems far from ideal.
+
+#### day 13
+
+#### Part 2
+
+This is the first part where the answer needs specific formatting.
+
+Using `--raw` or `--json | jq '.' -r` will provide correct formatting. For example:
+
+```
+$ nix eval '.#day13.part2' --raw
+```
+
+Also, you need a fixed width terminal, but that's kinda a given.
