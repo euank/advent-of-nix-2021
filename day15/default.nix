@@ -80,7 +80,41 @@ let
     in
     get2dArr state.shortestPaths (width - 1) (height - 1);
 
+
+  # Part2 stuff
+
+  expandGraph = graph:
+  let
+    modVal = val: if val > 9 then (modVal (val - 9)) else val;
+    widerGraph = map (row: concatMap (i: map (el: modVal (el + i)) row) (range 0 4)) graph;
+    widerTallerGraph = concatMap (i: (map (row: map (el: modVal (el + i)) row) widerGraph)) (range 0 4);
+  in widerTallerGraph;
+
+  part2Answer = filename:
+    let
+      subgraph = getData filename;
+      graph = expandGraph subgraph;
+
+      height = length graph;
+      width = length (head graph);
+      coords = cartesianProductOfSets { x = range 0 (width - 1); y = range 0 (height - 1); };
+      initShortest =
+        let
+          m = max graph;
+          infGraph = map (l: map (_: m) l) graph;
+        in
+        set2dArr infGraph 0 0 0;
+      initExplored = { };
+
+      state = shortestVal
+        ({ x = 0; y = 0; })
+        ({ shortestPaths = initShortest; explored = initExplored; unexplored = coords; })
+        graph;
+    in
+    get2dArr state.shortestPaths (width - 1) (height - 1);
+
 in
 {
   part1 = part1Answer ./input.lines;
+  part2 = part2Answer ./input.lines;
 }
