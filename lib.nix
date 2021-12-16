@@ -33,8 +33,8 @@ rec {
   get2dArr = arr: x: y: elemAt (elemAt arr y) x;
   get2dArrDef = arr: x: y: def:
     if x < 0 || y < 0 then def
-    else if y > (length arr) then def
-    else if x > (length (elemAt arr y)) then def
+    else if y >= (length arr) then def
+    else if x >= (length (elemAt arr y)) then def
     else elemAt (elemAt arr y) x;
 
   matches = regex: str: (builtins.match regex str) != null;
