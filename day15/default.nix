@@ -7,8 +7,34 @@ let
       data = fileContents filename;
       lines = splitString "\n" data;
       arr = map (l: map toInt (stringToCharacters l)) lines;
+      height = length arr;
+      width = length (head arr);
     in
-    arr;
+    mk2dArr (x: y: elemAt (elemAt arr y) x) width height;
+
+  # 2dArr functions
+  mk2dArr = gen: width: height:
+  {
+    inherit width height;
+    data = genList (n: let y = n / width; x = mod n width; in gen x y) (width * height);
+  };
+
+  get2dArr = arr: x: y:
+    elemAt arr.data (y * arr.width + x);
+
+  get2dArrDef = arr: x: y: def:
+  if x < 0 || y < 0 || x >= arr.width || y >= arr.height then def
+  else get2dArr arr x y;
+
+  set2dArr = arr: x: y: val:
+  let
+    idx = y * arr.width + x;
+  in
+    {
+      inherit (arr) width height;
+      data = (sublist 0 idx arr.data) ++ [ val ] ++ (sublist (idx + 1) ((length arr.data) - idx + 1) arr.data);
+    };
+
 
   adjacentCoords = c: [
     { x = c.x - 1; y = c.y; }
@@ -18,7 +44,7 @@ let
   ];
 
   # max possible value, sum of all ints here. Used as 'infinity' for our shortest path found so far
-  max = graph: foldl' builtins.add 0 (flatten graph);
+  max = graph: foldl' builtins.add 0 graph.data;
 
   isExplored = c: explored: explored ? "${toString c.x}-${toString c.y}";
 
@@ -28,8 +54,8 @@ let
   # state = { shortestPaths = [][]; explored = { "${x}-${y}" = boolean; }; unexplored = []{x = int; y = int }; }
   shortestVal = point: state: graph:
     let
-      height = length graph;
-      width = length (head graph);
+      height = graph.height;
+      width = graph.width;
       inherit (state) shortestPaths explored unexplored;
     in
     # We explored the destination, all done
@@ -38,7 +64,7 @@ let
       let
         neighbors = adjacentCoords point;
         # Find points actually within the graph and not visited
-        unvistedNeighbors = filter (c: c.x >= 0 && c.y >= 0 && c.x < height && c.y < width && !(isExplored c explored)) neighbors;
+        unvisitedNeighbors = filter (c: c.x >= 0 && c.y >= 0 && c.x < height && c.y < width && !(isExplored c explored)) neighbors;
         # Update their shortest paths
         myShortest = get2dArr shortestPaths point.x point.y;
         # Update shortestPaths for each of these points
@@ -50,7 +76,7 @@ let
             in
             if (myShortest + val) < curShortest then (set2dArr acc c.x c.y (myShortest + val)) else acc)
           shortestPaths
-          unvistedNeighbors;
+          unvisitedNeighbors;
         # Mark us as visited
         explored' = explored // { "${toString point.x}-${toString point.y}" = true; };
         unexplored' = filter (c: c.x != point.x || c.y != point.y) unexplored;
@@ -62,13 +88,13 @@ let
   part1Answer = filename:
     let
       graph = getData filename;
-      height = length graph;
-      width = length (head graph);
+      height = graph.height;
+      width = graph.width;
       coords = cartesianProductOfSets { x = range 0 (width - 1); y = range 0 (height - 1); };
       initShortest =
         let
           m = max graph;
-          infGraph = map (l: map (_: m) l) graph;
+          infGraph = mk2dArr (_: _: m) graph.width graph.height;
         in
         set2dArr infGraph 0 0 0;
       initExplored = { };
@@ -95,8 +121,8 @@ let
       subgraph = getData filename;
       graph = expandGraph subgraph;
 
-      height = length graph;
-      width = length (head graph);
+      height = graph.height;
+      width = graph.width;
       coords = cartesianProductOfSets { x = range 0 (width - 1); y = range 0 (height - 1); };
       initShortest =
         let
@@ -112,9 +138,9 @@ let
         graph;
     in
     get2dArr state.shortestPaths (width - 1) (height - 1);
-
 in
 {
+  inherit mk2dArr get2dArr set2dArr;
   part1 = part1Answer ./input.lines;
   part2 = part2Answer ./input.lines;
 }
