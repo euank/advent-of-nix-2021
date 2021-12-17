@@ -75,11 +75,10 @@ let
           infGraph = map (l: map (_: m) l) graph;
         in
         set2dArr infGraph 0 0 0;
-      initExplored = { };
 
       state = shortestVal
         ({ x = 0; y = 0; })
-        ({ shortestPaths = initShortest; explored = initExplored; unexplored = {}; })
+        ({ shortestPaths = initShortest; explored = {}; unexplored = {}; })
         graph;
     in
     get2dArr state.shortestPaths (width - 1) (height - 1);
@@ -101,19 +100,16 @@ let
 
       height = length graph;
       width = length (head graph);
-      coords = cartesianProductOfSets { x = range 0 (width - 1); y = range 0 (height - 1); };
-      coordsAttr = foldl' (acc: c: acc // { "${toString c.x}-${toString c.y}" = c; }) {} coords;
       initShortest =
         let
           m = max graph;
           infGraph = map (l: map (_: m) l) graph;
         in
         set2dArr infGraph 0 0 0;
-      initExplored = { };
 
       state = shortestVal
         ({ x = 0; y = 0; })
-        ({ shortestPaths = initShortest; explored = initExplored; unexplored = coordsAttr; })
+        ({ shortestPaths = initShortest; explored = {}; unexplored = {}; })
         graph;
     in
     get2dArr state.shortestPaths (width - 1) (height - 1);
