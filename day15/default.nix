@@ -54,21 +54,21 @@ let
             if (myShortest + val) < curShortest then (set2dArr acc c.x c.y (myShortest + val)) else acc)
           shortestPaths
           unvistedNeighbors;
+
+        unexplored' = foldl' (acc: c: (acc // { "${toString c.x}-${toString c.y}" = c; })) unexplored unvistedNeighbors;
         # Mark us as visited
         explored' = explored // { "${toString point.x}-${toString point.y}" = true; };
-        unexplored' = removeAttrs unexplored [ "${toString point.x}-${toString point.y}" ];
+        unexplored'' = removeAttrs unexplored' [ "${toString point.x}-${toString point.y}" ];
         # Find the next point to visit
-        nextPoint = getMinUnexploredPoint shortest' unexplored';
+        nextPoint = getMinUnexploredPoint shortest' unexplored'';
       in
-      shortestVal nextPoint { shortestPaths = shortest'; explored = explored'; unexplored = unexplored'; } graph;
+      shortestVal nextPoint { shortestPaths = shortest'; explored = explored'; unexplored = unexplored''; } graph;
 
   part1Answer = filename:
     let
       graph = getData filename;
       height = length graph;
       width = length (head graph);
-      coords = cartesianProductOfSets { x = range 0 (width - 1); y = range 0 (height - 1); };
-      coordsAttr = foldl' (acc: c: acc // { "${toString c.x}-${toString c.y}" = c; }) {} coords;
       initShortest =
         let
           m = max graph;
@@ -79,7 +79,7 @@ let
 
       state = shortestVal
         ({ x = 0; y = 0; })
-        ({ shortestPaths = initShortest; explored = initExplored; unexplored = coordsAttr; })
+        ({ shortestPaths = initShortest; explored = initExplored; unexplored = {}; })
         graph;
     in
     get2dArr state.shortestPaths (width - 1) (height - 1);
