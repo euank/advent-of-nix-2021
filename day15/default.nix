@@ -23,9 +23,12 @@ let
   isExplored = c: explored: explored ? "${toString c.x}-${toString c.y}";
 
   getMinUnexploredPoint = graph: unexplored:
-    foldl' (m: c: if (get2dArr graph c.x c.y) < (get2dArr graph m.x m.y) then c else m) (head unexplored) (tail unexplored);
+  let
+    unexploredList = attrValues unexplored;
+  in
+    foldl' (m: c: if (get2dArr graph c.x c.y) < (get2dArr graph m.x m.y) then c else m) (head unexploredList) (tail unexploredList);
 
-  # state = { shortestPaths = [][]; explored = { "${x}-${y}" = boolean; }; unexplored = []{x = int; y = int }; }
+  # state = { shortestPaths = [][]; explored = { "${x}-${y}" = boolean; }; unexplored = { "${x}=${y}" = {x=int; y=int;}; }; }
   shortestVal = point: state: graph:
     let
       height = length graph;
@@ -38,7 +41,7 @@ let
       let
         neighbors = adjacentCoords point;
         # Find points actually within the graph and not visited
-        unvistedNeighbors = filter (c: c.x >= 0 && c.y >= 0 && c.x < height && c.y < width && !(isExplored c explored)) neighbors;
+        unvistedNeighbors = filter (c: c.x >= 0 && c.y >= 0 && c.x < width && c.y < height && !(isExplored c explored)) neighbors;
         # Update their shortest paths
         myShortest = get2dArr shortestPaths point.x point.y;
         # Update shortestPaths for each of these points
@@ -53,7 +56,7 @@ let
           unvistedNeighbors;
         # Mark us as visited
         explored' = explored // { "${toString point.x}-${toString point.y}" = true; };
-        unexplored' = filter (c: c.x != point.x || c.y != point.y) unexplored;
+        unexplored' = removeAttrs unexplored [ "${toString point.x}-${toString point.y}" ];
         # Find the next point to visit
         nextPoint = getMinUnexploredPoint shortest' unexplored';
       in
@@ -65,6 +68,7 @@ let
       height = length graph;
       width = length (head graph);
       coords = cartesianProductOfSets { x = range 0 (width - 1); y = range 0 (height - 1); };
+      coordsAttr = foldl' (acc: c: acc // { "${toString c.x}-${toString c.y}" = c; }) {} coords;
       initShortest =
         let
           m = max graph;
@@ -75,14 +79,14 @@ let
 
       state = shortestVal
         ({ x = 0; y = 0; })
-        ({ shortestPaths = initShortest; explored = initExplored; unexplored = coords; })
+        ({ shortestPaths = initShortest; explored = initExplored; unexplored = coordsAttr; })
         graph;
     in
     get2dArr state.shortestPaths (width - 1) (height - 1);
 
 
   # Part2 stuff
-
+  # Expand the graph to the part2 size
   expandGraph = graph:
   let
     modVal = val: if val > 9 then (modVal (val - 9)) else val;
@@ -98,6 +102,7 @@ let
       height = length graph;
       width = length (head graph);
       coords = cartesianProductOfSets { x = range 0 (width - 1); y = range 0 (height - 1); };
+      coordsAttr = foldl' (acc: c: acc // { "${toString c.x}-${toString c.y}" = c; }) {} coords;
       initShortest =
         let
           m = max graph;
@@ -108,7 +113,7 @@ let
 
       state = shortestVal
         ({ x = 0; y = 0; })
-        ({ shortestPaths = initShortest; explored = initExplored; unexplored = coords; })
+        ({ shortestPaths = initShortest; explored = initExplored; unexplored = coordsAttr; })
         graph;
     in
     get2dArr state.shortestPaths (width - 1) (height - 1);
