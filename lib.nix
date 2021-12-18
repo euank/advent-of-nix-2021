@@ -38,4 +38,7 @@ rec {
     else elemAt (elemAt arr y) x;
 
   matches = regex: str: (builtins.match regex str) != null;
+
+  swap = arr: i: j:
+    builtins.genList (idx: let idx' = if idx == i then j else if idx == j then i else idx; in builtins.elemAt arr idx') (builtins.length arr);
 }

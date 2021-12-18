@@ -11,5 +11,8 @@
   in
   rec {
     inherit pkgs lib;
+
+    bench = import ./bench { inherit pkgs lib; };
+
   } // (pkgs.lib.mapAttrs (name: _: import ./${name} { inherit pkgs lib; }) dayDirs);
 }
