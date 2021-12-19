@@ -20,68 +20,60 @@ let
   # max possible value, sum of all ints here. Used as 'infinity' for our shortest path found so far
   max = graph: foldl' builtins.add 0 (flatten graph);
 
-  isExplored = c: explored: explored ? "${toString c.x}-${toString c.y}";
-
-  getMinUnexploredPoint = graph: unexplored:
+  # This implements A*. Initially, I wrote dijkstra's, but it was too slow for part2.
+  # We have a natural heuristic function in that we know the shortest possible
+  # path is always a path of all '1' values straight to the goal, so use that
+  # as the heuristic.
+  shortestPathHeuristic = graph: x: y:
   let
-    unexploredList = attrValues unexplored;
+    height = length graph;
+    width = length (head graph);
   in
-    foldl' (m: c: if (get2dArr graph c.x c.y) < (get2dArr graph m.x m.y) then c else m) (head unexploredList) (tail unexploredList);
+    ((width - 1 - x) + (height - 1 - y));
 
-  # state = { shortestPaths = [][]; explored = { "${x}-${y}" = boolean; }; unexplored = { "${x}=${y}" = {x=int; y=int;}; }; }
-  shortestVal = point: state: graph:
+  # I don't know A* by memory, unlike dijsktras, so I'm basing it off of:
+  # https://www.redblobgames.com/pathfinding/a-star/implementation.html#python-astar
+  # state: {
+  #   shortest = attr of points to shortestDist;
+  #   frontier = heap of { x = int; y = int ; val = shortestDist; hval = heuristic for shortest distance };
+  # }
+  shortestVal = state: graph:
     let
       height = length graph;
       width = length (head graph);
-      inherit (state) shortestPaths explored unexplored;
+      inherit (state) shortest frontier;
+      popVal = heap.pop frontier;
+      frontier' = popVal.heap;
+      cur = popVal.val;
     in
-    # We explored the destination, all done
-    if isExplored { x = width - 1; y = height - 1; } explored then state
+    # We reached the destination, all done
+    if cur.x == (width - 1) && cur.y == (height - 1) then cur.val
+    # This is a stale entry from our heap; since we use a heap, instead of a
+    # priority queue, it's possible to have duplicate entries, and this is the
+    # worse one. Just ignore it.
+    else if (shortest ? "${toString cur.x}-${toString cur.y}") && cur.val > shortest."${toString cur.x}-${toString cur.y}" then shortestVal { frontier = frontier'; shortest = shortest; } graph
     else
       let
-        neighbors = adjacentCoords point;
-        # Find points actually within the graph and not visited
-        unvistedNeighbors = filter (c: c.x >= 0 && c.y >= 0 && c.x < width && c.y < height && !(isExplored c explored)) neighbors;
-        # Update their shortest paths
-        myShortest = get2dArr shortestPaths point.x point.y;
-        # Update shortestPaths for each of these points
-        shortest' = foldl'
-          (acc: c:
-            let
-              curShortest = get2dArr acc c.x c.y;
-              val = get2dArr graph c.x c.y;
-            in
-            if (myShortest + val) < curShortest then (set2dArr acc c.x c.y (myShortest + val)) else acc)
-          shortestPaths
-          unvistedNeighbors;
-
-        unexplored' = foldl' (acc: c: (acc // { "${toString c.x}-${toString c.y}" = c; })) unexplored unvistedNeighbors;
-        # Mark us as visited
-        explored' = explored // { "${toString point.x}-${toString point.y}" = true; };
-        unexplored'' = removeAttrs unexplored' [ "${toString point.x}-${toString point.y}" ];
-        # Find the next point to visit
-        nextPoint = getMinUnexploredPoint shortest' unexplored'';
+        # Find points actually within the graph
+        neighbors = filter (c: c.x >= 0 && c.y >= 0 && c.x < width && c.y < height) (adjacentCoords cur);
+        neighborCosts = map (p: let val = cur.val + (get2dArr graph p.x p.y); in p // { inherit val; hval = val + (shortestPathHeuristic graph p.x p.y); }) neighbors;
+        # neighbors that we haven't seen yet, or that are better than our current best.
+        toAdd = filter (p: !(shortest ?  "${toString p.x}-${toString p.y}") || shortest."${toString p.x}-${toString p.y}" > p.val) neighborCosts;
+        # Add them to the frontier and to shortest
+        frontier'' = foldl' (f: p: heap.insert f p) frontier' toAdd;
+        shortest' = shortest // (listToAttrs (map (p: nameValuePair "${toString p.x}-${toString p.y}" p.val) toAdd));
       in
-      shortestVal nextPoint { shortestPaths = shortest'; explored = explored'; unexplored = unexplored''; } graph;
+      shortestVal { shortest = shortest'; frontier = frontier''; } graph;
 
   part1Answer = filename:
     let
-      graph = getData filename;
       height = length graph;
       width = length (head graph);
-      initShortest =
-        let
-          m = max graph;
-          infGraph = map (l: map (_: m) l) graph;
-        in
-        set2dArr infGraph 0 0 0;
-
-      state = shortestVal
-        ({ x = 0; y = 0; })
-        ({ shortestPaths = initShortest; explored = {}; unexplored = {}; })
-        graph;
+      graph = getData filename;
     in
-    get2dArr state.shortestPaths (width - 1) (height - 1);
+      shortestVal
+        ({ shortest = { "0-0" = 0; }; frontier = (heap.insert (heap.mkHeap (lhs: rhs: (compare lhs.hval rhs.hval))) { x = 0; y = 0; val = 0; hval = shortestPathHeuristic graph 0 0; }); })
+        graph;
 
 
   # Part2 stuff
@@ -100,19 +92,10 @@ let
 
       height = length graph;
       width = length (head graph);
-      initShortest =
-        let
-          m = max graph;
-          infGraph = map (l: map (_: m) l) graph;
-        in
-        set2dArr infGraph 0 0 0;
-
-      state = shortestVal
-        ({ x = 0; y = 0; })
-        ({ shortestPaths = initShortest; explored = {}; unexplored = {}; })
-        graph;
     in
-    get2dArr state.shortestPaths (width - 1) (height - 1);
+      shortestVal
+        ({ shortest = { "0-0" = 0; }; frontier = (heap.insert (heap.mkHeap (lhs: rhs: (compare lhs.hval rhs.hval))) { x = 0; y = 0; val = 0; hval = shortestPathHeuristic graph 0 0; }); })
+        graph;
 
 in
 {

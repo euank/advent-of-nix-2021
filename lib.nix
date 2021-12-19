@@ -1,6 +1,6 @@
 { pkgs }:
 with pkgs.lib;
-rec {
+let lib = rec {
   # Convert a binary representation of a string to an integer
   fromBinary = str: foldl' (acc: n: acc * 2 + n) 0 (map toInt (stringToCharacters str));
 
@@ -41,4 +41,9 @@ rec {
 
   swap = arr: i: j:
     builtins.genList (idx: let idx' = if idx == i then j else if idx == j then i else idx; in builtins.elemAt arr idx') (builtins.length arr);
-}
+
+  heap = import ./heap.nix { inherit pkgs lib; };
+
+  graph = import ./graph.nix { inherit pkgs lib; };
+};
+in lib
