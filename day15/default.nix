@@ -100,5 +100,6 @@ let
 in
 {
   part1 = part1Answer ./input.lines;
-  part2 = part2Answer ./input.lines;
+  # Commented out since it takes too long to terminate.
+  # part2 = part2Answer ./input.lines;
 }

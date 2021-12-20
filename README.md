@@ -44,3 +44,11 @@ $ nix eval '.#day13.part2' --raw
 ```
 
 Also, you need a fixed width terminal, but that's kinda a given.
+
+#### day 15 - part 2
+
+This is the first one which does not complete quickly enough to run at all. The
+same algorithm works fine for me in another language with mutable
+datastructures, but not in nix.
+
+I'll come back to it, but for now, I'm skipping part 2 of this one.
