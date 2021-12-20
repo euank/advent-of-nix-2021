@@ -40,7 +40,7 @@ let
     else heap;
 in
 rec {
-  # mkHeap returns a max binary heap which may be used with the other functions
+  # mkHeap returns a min binary heap which may be used with the other functions
   # in this library.
   mkHeap = cmp: { inherit cmp; data = []; size = 0; };
 
