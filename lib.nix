@@ -12,6 +12,8 @@ let lib = rec {
 
   abs = x: if x < 0 then (-1) * x else x;
 
+  sum = l: foldl' builtins.add 0 l;
+
   containsAll = eq: xs: searches: all (el: any (eq el) xs) searches;
 
   removePrefixAll = prefix: str: if ! (hasPrefix prefix str) then str else removePrefixAll prefix (removePrefix prefix str);

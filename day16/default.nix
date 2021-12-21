@@ -17,8 +17,14 @@ let
     bits;
 
   types = {
-    lit = 4;
-    op = 6;
+    sum  = 0;
+    prod = 1;
+    min  = 2;
+    max  = 3;
+    lit  = 4;
+    gt   = 5;
+    lt   = 6;
+    eq   = 7;
   };
 
   parseLiteral = state: version: num:
@@ -30,10 +36,10 @@ let
       num' = num * 16 + groupNum;
       arr = drop 5 state.arr;
     in
-    if isEnd then { inherit arr; packets = state.packets ++ [{ type = types.lit; val = num'; inherit version; }]; }
+    if isEnd then { inherit arr; packets = state.packets ++ [{ typ = types.lit; val = num'; inherit version; }]; }
     else parseLiteral (state // { inherit arr; }) version num';
 
-  parseOperator = state: version:
+  parseOperator = state: version: typ:
     let
       lenTyp = head state.arr;
       arr = tail state.arr;
@@ -45,7 +51,7 @@ let
       in
       {
         arr = drop n arr';
-        packets = state.packets ++ [{ typ = types.op; inherit version; packets = parsePackets (take n arr'); }];
+        packets = state.packets ++ [{ inherit typ version; packets = parsePackets (take n arr'); }];
       }
     else
       let
@@ -55,7 +61,7 @@ let
       in
       {
         arr = parsedState.arr;
-        packets = state.packets ++ [{ typ = types.op; inherit version; packets = parsedState.packets; }];
+        packets = state.packets ++ [{ inherit typ version; packets = parsedState.packets; }];
       };
 
   parsePacket = state:
@@ -67,7 +73,7 @@ let
     in
     if (length state.arr) < 8 && all (e: e == 0) state.arr then state // { arr = [ ]; }
     else if typ == types.lit then (parseLiteral (state // { arr = arr'; }) v 0)
-    else parseOperator (state // { arr = arr'; }) v;
+    else parseOperator (state // { arr = arr'; }) v typ;
 
   parsePackets = arr:
     let
@@ -88,7 +94,27 @@ let
       packets = parsePackets data;
     in
     sumPacketVersions packets;
+
+  # part2 stuff
+  evalPacket = p:
+  if p.typ == types.sum then sum (map evalPacket p.packets)
+  else if p.typ == types.prod then foldl' (acc: p: acc * p) 1 (map evalPacket p.packets)
+  else if p.typ == types.min then foldl' (lhs: rhs: if lhs == null then rhs else min lhs rhs) null (map evalPacket p.packets)
+  else if p.typ == types.max then foldl' (lhs: rhs: if lhs == null then rhs else max lhs rhs) null (map evalPacket p.packets)
+  else if p.typ == types.lit then p.val
+  else if p.typ == types.gt then if (evalPacket (elemAt p.packets 0)) > (evalPacket (elemAt p.packets 1)) then 1 else 0
+  else if p.typ == types.lt then if (evalPacket (elemAt p.packets 0)) < (evalPacket (elemAt p.packets 1)) then 1 else 0
+  else if p.typ == types.eq then if (evalPacket (elemAt p.packets 0)) == (evalPacket (elemAt p.packets 1)) then 1 else 0
+  else throw "unrecognized type";
+
+  part2Answer = filename:
+    let
+      data = getData filename;
+      packets = parsePackets data;
+    in
+    evalPacket (head packets);
 in
 {
   part1 = part1Answer ./input.lines;
+  part2 = part2Answer ./input.lines;
 }
