@@ -2,7 +2,9 @@
 with pkgs.lib;
 let lib = rec {
   # Convert a binary representation of a string to an integer
-  fromBinary = str: foldl' (acc: n: acc * 2 + n) 0 (map toInt (stringToCharacters str));
+  fromBinary = str: fromBinaryBits (map toInt (stringToCharacters str));
+
+  fromBinaryBits = bits: foldl' (acc: n: acc * 2 + n) 0 bits;
 
   bitSet = n: i: if i == 0 then (mod n 2) == 1 else bitSet (n / 2) (i - 1);
 
