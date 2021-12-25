@@ -49,5 +49,20 @@ let lib = rec {
   heap = import ./heap.nix { inherit pkgs lib; };
 
   graph = import ./graph.nix { inherit pkgs lib; };
+
+  # splitUntil splits at list into two pieces, a piece before the predicate
+  # returns true, and a piece after the predicate first returns true,
+  # inclusive.
+  # For example:
+  #   splitUntil (el: el == 2) [ 0 1 2 3 4 5 6] # { fst = [ 0 1 ]; snd = [ 2 3 4 5 6 ]; }
+  #   splitUnti (_: false) [ 0 1 2 ] # { fst = [ 0 1 2 ]; snd = []; }
+  splitUntil = pred: list:
+    let
+      splitIdx = head (remove null (imap0 (i: c: if pred c then i else null) list));
+    in
+      {
+        fst = sublist 0 splitIdx list;
+        snd = sublist splitIdx ((length list) - splitIdx) list;
+      };
 };
 in lib
