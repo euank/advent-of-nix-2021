@@ -57,7 +57,24 @@ let
       else maxForX max x (y + 1);
   in
   foldl' (max: x: let m = maxForX 0 x 0; in if m > max then m else max) 0 validXs;
+
+
+  # Part 2
+  countHittingVelocities = field:
+  let
+    # Try every X vel from 1 to one that instantly overshoots
+    validXs = range 0 field.toX;
+    countForX = count: x: y:
+    let
+      s = shootProbe field { inherit x y; };
+    in
+      if s ? terminal then count
+      else if s.h != null then countForX (count + 1) x (y + 1)
+      else countForX count x (y + 1);
+  in
+  foldl' (count: x: count + (countForX 0 x field.y)) 0 validXs;
 in
 {
   part1 = findMaxProbe (parseField ./input.lines);
+  part2 = countHittingVelocities (parseField ./input.lines);
 }
