@@ -72,8 +72,6 @@ let lib = rec {
 
   matrixMult = matrix: vec: map (mrow: dotProduct mrow vec) matrix;
 
-
   applyN = n: f: init: foldl' (acc: _: f acc) init (range 1 n);
-
 };
 in lib
