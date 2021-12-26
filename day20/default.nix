@@ -57,7 +57,22 @@ let
       applied = applyN 2 applyStep data';
     in
     countPixels applied.image;
+
+  # part2
+  # Note: this completes, but is slow
+  # I suspect we could memoize in order to make this fast (i.e. in `pointVal`,
+  # go to `pointValAfterSteps` and memoize that i.e. a grid of '0101110101'
+  # goes to '1' after 50 steps or such.
+  # But, hey, 10 minutes isn't the end of the world. I'll take the answer and move on.
+  part2Answer = filename:
+    let
+      data = getData filename;
+      data' = expandImage data;
+      applied = applyN 50 applyStep data';
+    in
+    countPixels applied.image;
 in
 rec {
   part1 = part1Answer ./input.lines;
+  part2 = part2Answer ./input.lines;
 }

@@ -56,3 +56,7 @@ I'll come back to it, but for now, I'm skipping part 2 of this one.
 #### day 19
 
 This one's another real slow one. It takes 13 minutes per part on my machine.
+
+#### day 20 - part 2
+
+Slow. 8 minutes on my machine.
