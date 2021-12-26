@@ -101,7 +101,7 @@ let
             unfixed = (filter (el: el.name != fixed.name) state.unfixed) ++ offsetSolved;
           };
         in
-        if (traceVal (length state'.remaining)) == 0 then state'
+        if length state'.remaining == 0 then state'
         else solveWith (head state'.unfixed) state';
     in
     (solveWith (head scanners) { oriented = [ (head scanners) ]; remaining = tail scanners; unfixed = [ ]; }).oriented;
@@ -145,7 +145,40 @@ let
       solvedScanners = solveScanners data;
     in
     length (mergeSolvedScanners solvedScanners);
+
+
+  # part 2
+
+  allEqual = cmp: arr:
+    if (length arr) <= 1 then true
+    else if (cmp (head arr) (elemAt arr 1)) == 0 then allEqual cmp (tail arr)
+    else false;
+
+  # Since I didn't save the scanner positions in the previous step, calculate
+  # them out again.
+  # Basically, figure out the right rotation, and then diff the
+  # rotated+oriented one with just the rotated one.
+  # This is quick enough that it seems easier than updating the prev code to
+  # save the scanner offset, or the rotation applied, correctly.
+  findPos = scanner: oriented:
+    let
+      rotations = getRotations scanner;
+      rotatedOnlyScanner = findFirst (s: let diffs = zipListsWith (lhs: rhs: pointSub lhs rhs) s oriented; in allEqual cmpPoints diffs) null rotations;
+    in
+    pointSub (head oriented) (head rotatedOnlyScanner);
+
+  mdist = a: b: (abs (b.x - a.x)) + (abs (b.y - a.y)) + (abs (b.z - a.z));
+
+  part2Answer = filename:
+    let
+      scanners = getData filename;
+      solvedScanners = solveScanners scanners;
+      scannerPositions = map (s: let newS = findFirst (ns: ns.name == s.name) null solvedScanners; in findPos s.points newS.points) scanners;
+      scannerPosPairs = cartesianProductOfSets { lhs = scannerPositions; rhs = scannerPositions; };
+    in
+    foldl' (m: pair: let d = mdist pair.lhs pair.rhs; in max m d) 0 scannerPosPairs;
 in
 {
   part1 = part1Answer ./input.lines;
+  part2 = part2Answer ./input.lines;
 }
