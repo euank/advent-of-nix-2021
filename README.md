@@ -60,3 +60,8 @@ This one's another real slow one. It takes 13 minutes per part on my machine.
 #### day 20 - part 2
 
 Slow. 8 minutes on my machine.
+
+#### day 21 - part 2
+
+We're on a roll with slow implementations that run just quick enough to complete.
+5 minutes on my machine, and it took ~60GiB of RSS.
