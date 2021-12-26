@@ -52,3 +52,7 @@ same algorithm works fine for me in another language with mutable
 datastructures, but not in nix.
 
 I'll come back to it, but for now, I'm skipping part 2 of this one.
+
+#### day 19
+
+This one's another real slow one. It takes 13 minutes per part on my machine.
