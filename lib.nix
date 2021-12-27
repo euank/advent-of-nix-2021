@@ -65,7 +65,6 @@ let lib = rec {
         snd = sublist splitIdx ((length list) - splitIdx) list;
       };
 
-
   dotProduct = v1: v2:
   if (length v1) != (length v2) then throw "dot product requires equal length vectors"
   else foldl' builtins.add 0 (zipListsWith (x: y: x * y) v1 v2);
