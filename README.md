@@ -65,3 +65,5 @@ Slow. 8 minutes on my machine.
 
 We're on a roll with slow implementations that run just quick enough to complete.
 5 minutes on my machine, and it took ~60GiB of RSS.
+
+From here on, I'll stop noting slow runtimes unless they're really big.

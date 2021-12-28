@@ -2,19 +2,23 @@
 with pkgs.lib;
 with lib;
 let
-  # This puzzle's space looks legit small enough that we can just brute force
-  # the whole thing. Let's do it.
   getData = filename:
   let
     data = fileContents filename;
     lines = splitString "\n" data;
-    topLine = elemAt lines 2;
-    bottomLine = elemAt lines 3;
-    topChars = filter (c: matches "^[A-Z]$" c) (stringToCharacters topLine);
-    bottomChars = filter (c: matches "^[A-Z]$" c) (stringToCharacters bottomLine);
+    filterLine = l: filter (c: matches "^[A-Z]$" c) (stringToCharacters l);
+    topLine = filterLine (elemAt lines 2);
+    secondLine = [ "D" "C" "B" "A" ];
+    thirdLine = [ "D" "B" "A" "C" ];
+    fourthLine = filterLine (elemAt lines 3);
+    roomLines = [ topLine secondLine thirdLine fourthLine ];
   in
-  # Store all state as a list, with 0..10 being the hallway and then 11.12 being the 'a' room, etc.
-  (genList (_: "_") 11) ++ (flatten (zipListsWith (l: r: [ l r ]) topChars bottomChars));
+  # Store all state as a list, with 0..10 being the hallway, and then a dead
+  # square so rooms align to a multiple of 4, and then all 4 rooms.
+  (genList (_: "_") 11) ++ [ "x" ] ++ (map (l: elemAt l 0) roomLines) ++
+    (map (l: elemAt l 1) roomLines) ++
+    (map (l: elemAt l 2) roomLines) ++
+    (map (l: elemAt l 3) roomLines);
 
   scoreMap = {
     "A" = 1;
@@ -22,17 +26,16 @@ let
     "C" = 100;
     "D" = 1000;
   };
+  # 4 spaces between them now
   roomIdx = {
-    "A" = 11;
-    "B" = 13;
-    "C" = 15;
-    "D" = 17;
+    "A" = 12;
+    "B" = 16;
+    "C" = 20;
+    "D" = 24;
   };
 
-  isSolved = board: (concatStrings (sublist 11 8 board)) == "AABBCCDD";
+  isSolved = board: (concatStrings (sublist roomIdx.A (4*4) board)) == "AAAABBBBCCCCDDDD";
 
-  # idx is the place on the board to look. There's 19 total locations (11 hallway squares + 8 room squares).
-  # Each idx can result in multiple possible "next" moves.
   makeMoveAt = b: idx:
   let
     el = elemAt b idx;
@@ -42,41 +45,55 @@ let
   else if isHallway then maybeMoveToRoom b idx
   else maybeMoveToHallway b idx;
 
-  isTrappedInRoom = b: idx: (mod idx 2) == 0 && (elemAt b (idx - 1)) != "_";
+  isTrappedInRoom = b: idx:
+  let
+    roomDepth = mod idx 4;
+    roomAlignedIdx = idx - roomDepth;
+  in
+  if roomDepth == 0 then false
+  else any (c: c != "_") (sublist roomAlignedIdx roomDepth b);
 
   numMoves = idx: tgt:
   # always calc from room -> hallway
   if tgt > idx then numMoves tgt idx
   # if we're in the back of the room, move to the front, then move out
-  else if (mod idx 2) == 0 then 1 + (numMoves (idx - 1) tgt)
+  else if (mod idx 4) != 0 then (mod idx 4) + (numMoves (idx - (mod idx 4)) tgt)
   # rooms pop out at 2/4/6/8 in the hallway.
-  # rooms are stored at idx 11/13/15/17
-  # So subtract 9 to get the room idx -> hallways square, and then move to that square.
-  # And add 1 for stepping out of the room too.
-  else (abs ((idx - 9) - tgt)) + 1;
+  # rooms are stored at idx 12/16/20/24
+  # So divide by 2 and subtract 4 to get the hallway idx.
+  # Add 1 for popping out of the room too.
+  else abs ((idx / 2 - 4) - tgt) + 1;
 
   isInFinalLocation = b: el: idx:
-  # in back of the right room
-  if (mod idx 2) == 0 then idx == (roomIdx."${el}" + 1)
-  # in front of right room, with right back
-  else idx == roomIdx."${el}" && (elemAt b (roomIdx."${el}" + 1)) == el;
-
+  let
+    ridx = roomIdx."${el}";
+    roomDepth = mod idx 4;
+  in
+  if idx < ridx || idx > (ridx + 3) then false
+  # Are all the elements in front of us in the room in the right spot.
+  else ! any (e: e != el) (sublist idx (4 - roomDepth) b);
 
   maybeMoveToHallway = b: idx:
   let
     el = elemAt b idx;
     validHallwayIdxes = filter (i: (elemAt b i) == "_" && canReachHallway b idx i) (range 0 10);
   in
-  if isInFinalLocation b el idx then []
+  if (isInFinalLocation b el idx) then []
   else map (i: { lastMove = "hallway"; board = swap b i idx; score = (numMoves idx i) * scoreMap."${el}"; }) validHallwayIdxes;
 
+  roomIdxToHallwayIdx = idx:
+  let
+    roomDepth = mod idx 4;
+    roomAlignedIdx = idx - roomDepth;
+  in roomAlignedIdx / 2 - 4;
+
   canReachHallway = b: idx: tgt:
-  if isTrappedInRoom b idx then false
   # Can't stop right outside a room
-  else if tgt == 2 || tgt == 4 || tgt == 6 || tgt == 8 then false
+  if tgt == 2 || tgt == 4 || tgt == 6 || tgt == 8 then false
+  else if (isTrappedInRoom b idx) then false
   else
   let
-    roomHallwayIdx = (idx - 9 - (if (mod idx 2) == 0 then 1 else 0));
+    roomHallwayIdx = roomIdxToHallwayIdx idx;
     checkFrom = (min roomHallwayIdx tgt);
     checkTo = (max roomHallwayIdx tgt);
     squares = sublist checkFrom (checkTo - checkFrom) b;
@@ -85,7 +102,7 @@ let
 
   canReachRoom = b: idx: tgt:
   let
-    roomHallwayIdx = (tgt - 9 - (if (mod tgt 2) == 0 then 1 else 0));
+    roomHallwayIdx = roomIdxToHallwayIdx tgt;
     checkFrom = (min roomHallwayIdx idx);
     checkTo = (max roomHallwayIdx idx);
     checkIdexes = filter (i: i != idx) (range checkFrom checkTo);
@@ -93,18 +110,23 @@ let
   in
   ! (any (s: s != "_") squares);
 
-
   # If we're in the hallway, there's one valid move: moving to the right room
   maybeMoveToRoom = b: idx:
   let
     el = elemAt b idx;
     ridx = roomIdx."${el}";
-    targetIdx = if (elemAt b (ridx + 1)) == el then ridx else ridx + 1;
+    # Always move as far back in the room as we legally can, only moving closer
+    # to the front if the rest of the room is already valid.
+    targetIdx =
+    if elemAt b (ridx + 3) == el && elemAt b (ridx + 2) == el && elemAt b (ridx + 1) == el then ridx
+    else if elemAt b (ridx + 3) == el && elemAt b (ridx + 2) == el then ridx + 1
+    else if elemAt b (ridx + 3) == el then ridx + 2
+    else ridx + 3;
   in
-  # Full room, 2 in it already
+  # Full room, 4 in it already
   if (elemAt b ridx) != "_" then []
+  # Something already in our square
   else if (elemAt b targetIdx) != "_" then []
-  else if (elemAt b (ridx + 1)) != "_" && (elemAt b (ridx + 1)) != el then []
   else if ! canReachRoom b idx targetIdx then []
   else [ { lastMove = "room"; board = swap b idx targetIdx; score = (numMoves idx targetIdx) * scoreMap."${el}"; } ];
 
@@ -113,7 +135,7 @@ let
   bruteForceBoard = board: score: seen:
   let
     fingerprint = concatStrings board;
-    nextBoards = concatMap (idx: makeMoveAt board idx) (range 0 ((length board) - 1));
+    nextBoards = concatMap (idx: makeMoveAt board idx) (filter (i: i != 11) (range 0 ((length board) - 1)));
     roomBoard = findFirst (b: b.lastMove == "room") null nextBoards;
     nextBoards' = if roomBoard == null then nextBoards else [ roomBoard ];
     hasSeen = seen ? "${fingerprint}";
@@ -125,16 +147,7 @@ let
   else if hasSeen && seen."${fingerprint}" < score then { score = null; inherit seen; }
   else bestBoard;
 
-  part1Answer = filename:
+  part2Answer = filename:
   let data = getData filename;
   in (bruteForceBoard data 0 {}).score;
-
-  # On to part2
-  # Tragically, we've hardcoded the number of rooms in several places kinda deep in the callstack, so we're just copying the whole part1 solution into a new file to tweak.
-
-  part2Answer = import ./part2.nix { inherit pkgs lib; };
-in
-{
-  part1 = part1Answer ./input.lines;
-  part2 = part2Answer ./input.lines;
-}
+in part2Answer
