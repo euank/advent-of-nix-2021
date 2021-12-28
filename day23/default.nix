@@ -33,14 +33,16 @@ let
 
   # idx is the place on the board to look. There's 19 total locations (11 hallway squares + 8 room squares).
   # Each idx can result in multiple possible "next" moves.
-  makeMoveAt = b: idx:
+  makeMoveAt = board: idx:
   let
+    b = board.board;
     el = elemAt b idx;
     isHallway = idx <= 10;
+    score = board.score;
   in
   if el == "_" then []
-  else if isHallway then maybeMoveToRoom b idx
-  else maybeMoveToHallway b idx;
+  else if isHallway then maybeMoveToRoom b score idx
+  else maybeMoveToHallway b score idx;
 
   isTrappedInRoom = b: idx: (mod idx 2) == 0 && (elemAt b (idx - 1)) != "_";
 
@@ -61,14 +63,29 @@ let
   # in front of right room, with right back
   else idx == roomIdx."${el}" && (elemAt b (roomIdx."${el}" + 1)) == el;
 
+  numMoves2 = idx: tgt:
+  if idx == tgt then 0
+  else if idx <= 10 && tgt <= 10 then numMovesBetweenRooms idx tgt
+  else numMoves idx tgt;
 
-  maybeMoveToHallway = b: idx:
+  numMovesBetweenRooms = idx: tgt:
+  if (mod idx 2) == 0 then 1 + numMovesBetweenRooms (idx - 1) tgt
+  else if (mod tgt 2) == 0 then 1 + numMovesBetweenRooms idx (tgt - 1)
+  else if tgt < idx then numMovesBetweenRooms tgt idx
+  # 2 for 'step into hallway, step into room'
+  # Conveniently, the width between rooms and the depth is the same... so the 2
+  # spaces between room entrances in the array matcehs the hallway width.
+  else 2 + (tgt - idx);
+
+
+
+  maybeMoveToHallway = b: score: idx:
   let
     el = elemAt b idx;
     validHallwayIdxes = filter (i: (elemAt b i) == "_" && canReachHallway b idx i) (range 0 10);
   in
   if isInFinalLocation b el idx then []
-  else map (i: { board = swap b i idx; score = (numMoves idx i) * scoreMap."${el}"; }) validHallwayIdxes;
+  else map (i: { board = swap b i idx; score = score + (numMoves idx i) * scoreMap."${el}"; }) validHallwayIdxes;
 
   canReachHallway = b: idx: tgt:
   if isTrappedInRoom b idx then false
@@ -95,7 +112,7 @@ let
 
 
   # If we're in the hallway, there's one valid move: moving to the right room
-  maybeMoveToRoom = b: idx:
+  maybeMoveToRoom = b: score: idx:
   let
     el = elemAt b idx;
     ridx = roomIdx."${el}";
@@ -106,26 +123,43 @@ let
   else if (elemAt b targetIdx) != "_" then []
   else if (elemAt b (ridx + 1)) != "_" && (elemAt b (ridx + 1)) != el then []
   else if ! canReachRoom b idx targetIdx then []
-  else [ { board = swap b idx targetIdx; score = (numMoves idx targetIdx) * scoreMap."${el}"; } ];
+  else [ { board = swap b idx targetIdx; score = score + (numMoves idx targetIdx) * scoreMap."${el}"; } ];
 
   minNull = lhs: rhs: if lhs == null then rhs else if rhs == null then lhs else min lhs rhs;
 
-  bruteForceBoard = board: score: seen:
+
+  # Estimate how far from complete a board is
+  # Our heuristic is the distance each thing is from its target room
+  heuristic = board:
   let
-    fingerprint = concatStrings board;
-    nextBoards = concatMap (idx: makeMoveAt board idx) (range 0 ((length board) - 1));
-    hasSeen = seen ? "${fingerprint}";
-    seen' = if hasSeen && seen."${fingerprint}" <= score then seen else (seen // { "${fingerprint}" = score; });
-    bestBoard = foldl' (acc: b: let res = bruteForceBoard b.board (score + b.score) acc.seen; in { seen = res.seen; score = minNull acc.score res.score; }) { seen = seen'; score = null; } nextBoards;
+    as = filter (el: el != null) (imap0 (i: el: if el == "A" then i else null) board);
+    bs = filter (el: el != null) (imap0 (i: el: if el == "B" then i else null) board);
+    cs = filter (el: el != null) (imap0 (i: el: if el == "C" then i else null) board);
+    ds = filter (el: el != null) (imap0 (i: el: if el == "D" then i else null) board);
   in
-  if isSolved board then { inherit score seen; }
-  # prune, there's a better path here
-  else if hasSeen && seen."${fingerprint}" < score then { score = null; inherit seen; }
-  else bestBoard;
+  ((numMoves2 (head as) roomIdx.A) + (numMoves2 (head as) (roomIdx.A) + 1)) * scoreMap.A +
+  ((numMoves2 (head bs) roomIdx.B) + (numMoves2 (head bs) (roomIdx.B) + 1)) * scoreMap.B +
+  ((numMoves2 (head cs) roomIdx.C) + (numMoves2 (head cs) (roomIdx.C) + 1)) * scoreMap.C +
+  ((numMoves2 (head ds) roomIdx.D) + (numMoves2 (head ds) (roomIdx.D) + 1)) * scoreMap.D;
+
+
+  # b
+  findBestBoard = boards:
+  let
+    boards' = heap.pop boards;
+    board = traceValSeq boards'.val;
+    nextBoards = concatMap (idx: makeMoveAt board idx) (range 0 ((length board.board) - 1));
+    boards'' = foldl' (h: b: heap.insert h (b // { hscore = b.score + heuristic b.board; })) boards'.heap nextBoards;
+  in
+  if isSolved board.board then board.score
+  else findBestBoard boards'';
 
   part1Answer = filename:
-  let data = getData filename;
-  in (bruteForceBoard data 0 {}).score;
+  let
+    data = getData filename;
+    initHeap = heap.insert (heap.mkHeap (lhs: rhs: compare lhs.hscore rhs.hscore)) { board = data; score = 0; };
+  in
+  (findBestBoard initHeap).score;
 in
 {
   part1 = part1Answer ./input.lines;
