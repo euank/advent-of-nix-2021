@@ -68,7 +68,7 @@ let
     validHallwayIdxes = filter (i: (elemAt b i) == "_" && canReachHallway b idx i) (range 0 10);
   in
   if isInFinalLocation b el idx then []
-  else map (i: { board = swap b i idx; score = (numMoves idx i) * scoreMap."${el}"; }) validHallwayIdxes;
+  else map (i: { lastMove = "hallway"; board = swap b i idx; score = (numMoves idx i) * scoreMap."${el}"; }) validHallwayIdxes;
 
   canReachHallway = b: idx: tgt:
   if isTrappedInRoom b idx then false
@@ -106,7 +106,7 @@ let
   else if (elemAt b targetIdx) != "_" then []
   else if (elemAt b (ridx + 1)) != "_" && (elemAt b (ridx + 1)) != el then []
   else if ! canReachRoom b idx targetIdx then []
-  else [ { board = swap b idx targetIdx; score = (numMoves idx targetIdx) * scoreMap."${el}"; } ];
+  else [ { lastMove = "room"; board = swap b idx targetIdx; score = (numMoves idx targetIdx) * scoreMap."${el}"; } ];
 
   minNull = lhs: rhs: if lhs == null then rhs else if rhs == null then lhs else min lhs rhs;
 
@@ -114,9 +114,11 @@ let
   let
     fingerprint = concatStrings board;
     nextBoards = concatMap (idx: makeMoveAt board idx) (range 0 ((length board) - 1));
+    roomBoard = findFirst (b: b.lastMove == "room") null nextBoards;
+    nextBoards' = if roomBoard == null then nextBoards else [ roomBoard ];
     hasSeen = seen ? "${fingerprint}";
     seen' = if hasSeen && seen."${fingerprint}" <= score then seen else (seen // { "${fingerprint}" = score; });
-    bestBoard = foldl' (acc: b: let res = bruteForceBoard b.board (score + b.score) acc.seen; in { seen = res.seen; score = minNull acc.score res.score; }) { seen = seen'; score = null; } nextBoards;
+    bestBoard = foldl' (acc: b: let res = bruteForceBoard b.board (score + b.score) acc.seen; in { seen = res.seen; score = minNull acc.score res.score; }) { seen = seen'; score = null; } nextBoards';
   in
   if isSolved board then { inherit score seen; }
   # prune, there's a better path here
