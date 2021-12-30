@@ -2,6 +2,7 @@
 with pkgs.lib;
 with lib;
 let
+  heap = lib.heap2;
   getData = filename:
     let
       data = fileContents filename;
