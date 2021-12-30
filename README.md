@@ -67,3 +67,7 @@ We're on a roll with slow implementations that run just quick enough to complete
 5 minutes on my machine, and it took ~60GiB of RSS.
 
 From here on, I'll stop noting slow runtimes unless they're really big.
+
+#### day 24
+
+Each part takes over 30 minutes to run. Really big runtime.
