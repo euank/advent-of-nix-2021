@@ -14,6 +14,9 @@ let lib = rec {
 
   sum = l: foldl' builtins.add 0 l;
 
+  # x^n
+  pow = x: n: if n == 1 then x else x * (pow x (n - 1));
+
   containsAll = eq: xs: searches: all (el: any (eq el) xs) searches;
 
   removePrefixAll = prefix: str: if ! (hasPrefix prefix str) then str else removePrefixAll prefix (removePrefix prefix str);
