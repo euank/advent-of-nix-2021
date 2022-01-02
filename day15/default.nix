@@ -49,10 +49,6 @@ let
     in
     # We reached the destination, all done
     if cur.x == (width - 1) && cur.y == (height - 1) then cur.val
-    # This is a stale entry from our heap; since we use a heap, instead of a
-    # priority queue, it's possible to have duplicate entries, and this is the
-    # worse one. Just ignore it.
-    else if (shortest ? "${toString cur.x}-${toString cur.y}") && cur.val > shortest."${toString cur.x}-${toString cur.y}" then shortestVal { frontier = frontier'; shortest = shortest; } graph
     else
       let
         # Find points actually within the graph
