@@ -26,10 +26,10 @@ let
   # path is always a path of all '1' values straight to the goal, so use that
   # as the heuristic.
   shortestPathHeuristic = graph: x: y:
-  let
-    height = length graph;
-    width = length (head graph);
-  in
+    let
+      height = length graph;
+      width = length (head graph);
+    in
     ((width - 1 - x) + (height - 1 - y));
 
   # I don't know A* by memory, unlike dijsktras, so I'm basing it off of:
@@ -55,12 +55,21 @@ let
         neighbors = filter (c: c.x >= 0 && c.y >= 0 && c.x < width && c.y < height) (adjacentCoords cur);
         neighborCosts = map (p: let val = cur.val + (get2dArr graph p.x p.y); in p // { inherit val; hval = val + (shortestPathHeuristic graph p.x p.y); }) neighbors;
         # neighbors that we haven't seen yet, or that are better than our current best.
-        toAdd = filter (p: !(shortest ?  "${toString p.x}-${toString p.y}") || shortest."${toString p.x}-${toString p.y}" > p.val) neighborCosts;
+        toAdd = filter (p: p.val < shortest."${toString p.x}"."${toString p.y}") neighborCosts;
         # Add them to the frontier and to shortest
         frontier'' = foldl' (f: p: heap.insert f p) frontier' toAdd;
-        shortest' = shortest // (listToAttrs (map (p: nameValuePair "${toString p.x}-${toString p.y}" p.val) toAdd));
+        shortest' = foldl' (s: p: recursiveUpdate s { "${toString p.x}" = { "${toString p.y}" = p.val; }; }) shortest toAdd;
       in
       shortestVal { shortest = shortest'; frontier = frontier''; } graph;
+
+  initShortest = graph:
+    let
+      height = length graph;
+      width = length (head graph);
+      m = max graph;
+      attr = listToAttrs (genList (x: nameValuePair (toString x) (listToAttrs (genList (y: nameValuePair (toString y) m) height))) width);
+    in
+    recursiveUpdate attr { "0" = { "0" = 0; }; };
 
   part1Answer = filename:
     let
@@ -68,19 +77,20 @@ let
       width = length (head graph);
       graph = getData filename;
     in
-      shortestVal
-        ({ shortest = { "0-0" = 0; }; frontier = (heap.insert (heap.mkHeap (lhs: rhs: (compare lhs.hval rhs.hval))) { x = 0; y = 0; val = 0; hval = shortestPathHeuristic graph 0 0; }); })
-        graph;
+    shortestVal
+      ({ shortest = initShortest graph; frontier = (heap.insert (heap.mkHeap (lhs: rhs: (compare lhs.hval rhs.hval))) { x = 0; y = 0; val = 0; hval = shortestPathHeuristic graph 0 0; }); })
+      graph;
 
 
   # Part2 stuff
   # Expand the graph to the part2 size
   expandGraph = graph:
-  let
-    modVal = val: if val > 9 then (modVal (val - 9)) else val;
-    widerGraph = map (row: concatMap (i: map (el: modVal (el + i)) row) (range 0 4)) graph;
-    widerTallerGraph = concatMap (i: (map (row: map (el: modVal (el + i)) row) widerGraph)) (range 0 4);
-  in widerTallerGraph;
+    let
+      modVal = val: if val > 9 then (modVal (val - 9)) else val;
+      widerGraph = map (row: concatMap (i: map (el: modVal (el + i)) row) (range 0 4)) graph;
+      widerTallerGraph = concatMap (i: (map (row: map (el: modVal (el + i)) row) widerGraph)) (range 0 4);
+    in
+    widerTallerGraph;
 
   part2Answer = filename:
     let
@@ -90,13 +100,12 @@ let
       height = length graph;
       width = length (head graph);
     in
-      shortestVal
-        ({ shortest = { "0-0" = 0; }; frontier = (heap.insert (heap.mkHeap (lhs: rhs: (compare lhs.hval rhs.hval))) { x = 0; y = 0; val = 0; hval = shortestPathHeuristic graph 0 0; }); })
-        graph;
+    shortestVal
+      ({ shortest = initShortest graph; frontier = (heap.insert (heap.mkHeap (lhs: rhs: (compare lhs.hval rhs.hval))) { x = 0; y = 0; val = 0; hval = shortestPathHeuristic graph 0 0; }); })
+      graph;
 
 in
 {
   part1 = part1Answer ./input.lines;
-  # Commented out since it takes too long to terminate.
-  # part2 = part2Answer ./input.lines;
+  part2 = part2Answer ./input.lines;
 }
