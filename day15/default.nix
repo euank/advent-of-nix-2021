@@ -73,12 +73,10 @@ let
 
   part1Answer = filename:
     let
-      height = length graph;
-      width = length (head graph);
       graph = getData filename;
     in
     shortestVal
-      ({ shortest = initShortest graph; frontier = (heap.insert (heap.mkHeap (lhs: rhs: (compare lhs.hval rhs.hval))) { x = 0; y = 0; val = 0; hval = shortestPathHeuristic graph 0 0; }); })
+      { shortest = initShortest graph; frontier = (heap.insert (heap.mkHeap (lhs: rhs: (compare lhs.hval rhs.hval))) { x = 0; y = 0; val = 0; hval = shortestPathHeuristic graph 0 0; }); }
       graph;
 
 
@@ -96,12 +94,9 @@ let
     let
       subgraph = getData filename;
       graph = expandGraph subgraph;
-
-      height = length graph;
-      width = length (head graph);
     in
     shortestVal
-      ({ shortest = initShortest graph; frontier = (heap.insert (heap.mkHeap (lhs: rhs: (compare lhs.hval rhs.hval))) { x = 0; y = 0; val = 0; hval = shortestPathHeuristic graph 0 0; }); })
+      { shortest = initShortest graph; frontier = (heap.insert (heap.mkHeap (lhs: rhs: (compare lhs.hval rhs.hval))) { x = 0; y = 0; val = 0; hval = shortestPathHeuristic graph 0 0; }); }
       graph;
 
 in
